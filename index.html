@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Змійка</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    touch-action:none;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#111;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    overflow:hidden;
+}
+
+#game{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    width:100%;
+}
+
+canvas{
+    background:#222;
+    border:4px solid #4CAF50;
+    width:min(95vw,95vh);
+    height:min(95vw,95vh);
+    image-rendering:pixelated;
+}
+
+#score{
+    color:white;
+    font-size:24px;
+    margin-bottom:10px;
+}
+
+.controls{
+    margin-top:15px;
+    display:grid;
+    grid-template-columns:80px 80px 80px;
+    grid-template-rows:80px 80px;
+    gap:10px;
+}
+
+button{
+    font-size:32px;
+    border:none;
+    border-radius:15px;
+    background:#4CAF50;
+    color:white;
+}
+
+button:active{
+    background:#2e7d32;
+}
+
+.up{
+    grid-column:2;
+}
+
+.left{
+    grid-column:1;
+    grid-row:2;
+}
+
+.down{
+    grid-column:2;
+    grid-row:2;
+}
+
+.right{
+    grid-column:3;
+    grid-row:2;
+}
+
+@media(min-width:900px){
+.controls{
+display:none;
+}
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<div id="score">Рахунок: 0</div>
+
+<canvas id="canvas" width="400" height="400"></canvas>
+
+<div class="controls">
+<button class="up">▲</button>
+<button class="left">◀</button>
+<button class="down">▼</button>
+<button class="right">▶</button>
+</div>
+
+</div>
+
+<script>
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+const box=20;
+const size=20;
+
+let snake=[
+{x:10,y:10}
+];
+
+let dir="RIGHT";
+
+let food=randomFood();
+
+let score=0;
+
+function randomFood(){
+
+while(true){
+
+let x=Math.floor(Math.random()*size);
+let y=Math.floor(Math.random()*size);
+
+let ok=true;
+
+for(let s of snake){
+if(s.x===x && s.y===y){
+ok=false;
+break;
+}
+}
+
+if(ok) return {x,y};
+
+}
+
+}
+
+function draw(){
+
+ctx.fillStyle="#222";
+ctx.fillRect(0,0,400,400);
+
+ctx.fillStyle="red";
+ctx.fillRect(food.x*box,food.y*box,box,box);
+
+for(let i=0;i<snake.length;i++){
+
+ctx.fillStyle=i==0?"lime":"#4CAF50";
+ctx.fillRect(snake[i].x*box,snake[i].y*box,box-1,box-1);
+
+}
+
+}
+
+function update(){
+
+let head={...snake[0]};
+
+if(dir==="LEFT") head.x--;
+if(dir==="RIGHT") head.x++;
+if(dir==="UP") head.y--;
+if(dir==="DOWN") head.y++;
+
+if(
+head.x<0||
+head.y<0||
+head.x>=size||
+head.y>=size
+){
+return gameOver();
+}
+
+for(let s of snake){
+if(s.x===head.x && s.y===head.y){
+return gameOver();
+}
+}
+
+snake.unshift(head);
+
+if(head.x===food.x && head.y===food.y){
+
+score++;
+document.getElementById("score").innerText="Рахунок: "+score;
+food=randomFood();
+
+}else{
+
+snake.pop();
+
+}
+
+draw();
+
+}
+
+function gameOver(){
+
+alert("Гру завершено!\nРахунок: "+score);
+
+snake=[{x:10,y:10}];
+dir="RIGHT";
+score=0;
+document.getElementById("score").innerText="Рахунок: 0";
+food=randomFood();
+
+draw();
+
+}
+
+document.addEventListener("keydown",e=>{
+
+if(e.key==="ArrowLeft"&&dir!="RIGHT")dir="LEFT";
+if(e.key==="ArrowRight"&&dir!="LEFT")dir="RIGHT";
+if(e.key==="ArrowUp"&&dir!="DOWN")dir="UP";
+if(e.key==="ArrowDown"&&dir!="UP")dir="DOWN";
+
+});
+
+document.querySelector(".up").onclick=()=>{if(dir!="DOWN")dir="UP";}
+document.querySelector(".down").onclick=()=>{if(dir!="UP")dir="DOWN";}
+document.querySelector(".left").onclick=()=>{if(dir!="RIGHT")dir="LEFT";}
+document.querySelector(".right").onclick=()=>{if(dir!="LEFT")dir="RIGHT";}
+
+let startX=0;
+let startY=0;
+
+canvas.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX;
+startY=e.touches[0].clientY;
+});
+
+canvas.addEventListener("touchend",e=>{
+
+let dx=e.changedTouches[0].clientX-startX;
+let dy=e.changedTouches[0].clientY-startY;
+
+if(Math.abs(dx)>Math.abs(dy)){
+
+if(dx>20 && dir!="LEFT") dir="RIGHT";
+if(dx<-20 && dir!="RIGHT") dir="LEFT";
+
+}else{
+
+if(dy>20 && dir!="UP") dir="DOWN";
+if(dy<-20 && dir!="DOWN") dir="UP";
+
+}
+
+});
+
+draw();
+
+setInterval(update,140);
+
+</script>
+
+</body>
+</html>
